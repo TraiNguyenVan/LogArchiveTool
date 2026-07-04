@@ -6,6 +6,14 @@
 
 set -e
 
+# --- Load .env file if present ---
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    set -a
+    . "$SCRIPT_DIR/.env"
+    set +a
+fi
+
 # --- Defaults ---
 EMAIL=""
 FROM=""
@@ -27,6 +35,8 @@ usage() {
     echo "  SMTP_PORT   SMTP server port (default: 25)"
     echo "  SMTP_USER   SMTP username (optional)"
     echo "  SMTP_PASS   SMTP password (optional)"
+    echo ""
+    echo "Env vars can also be set in a .env file in the project root."
     echo ""
     echo "Examples:"
     echo "  ./log-archive.sh /var/log"
