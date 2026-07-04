@@ -101,7 +101,11 @@ if [ -n "$EMAIL" ]; then
     python3 << PYEOF
 import smtplib
 import ssl
+import os
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 
 host = "$SMTP_HOST"
 port = int("$SMTP_PORT")
@@ -118,11 +122,24 @@ body = """Archive created successfully.
   Size:        $ARCHIVE_SIZE
   Timestamp:   $TIMESTAMP_DISPLAY
 """
+archive_path = "$ARCHIVE_PATH"
+archive_name = "$ARCHIVE_NAME"
 
-msg = MIMEText(body)
+msg = MIMEMultipart()
 msg["Subject"] = subject
 msg["From"] = from_addr
 msg["To"] = to_addr
+msg.attach(MIMEText(body, "plain"))
+
+try:
+    with open(archive_path, "rb") as f:
+        part = MIMEBase("application", "gzip")
+        part.set_payload(f.read())
+    encoders.encode_base64(part)
+    part.add_header("Content-Disposition", f'attachment; filename="{archive_name}"')
+    msg.attach(part)
+except Exception as e:
+    print(f"Warning: Could not attach archive: {e}")
 
 try:
     context = ssl.create_default_context()
